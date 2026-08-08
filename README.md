@@ -50,3 +50,17 @@ The customer display connects to the QuickBill desktop application using:
 ```text
 WebSocket
 Port: 8765
+```
+
+## License
+
+This project is licensed under the MIT License.
+
+
+## Contact
+
+**LinkedIn**  
+https://www.linkedin.com/in/kartikbansode
+
+**GitHub**  
+https://github.com/kartikbansode
