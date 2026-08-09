@@ -38,7 +38,7 @@ android {
         minSdk = 26
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -79,6 +79,8 @@ dependencies {
     implementation("org.json:json:20250517")
     implementation("androidx.compose.material:material-icons-extended")
 
+    implementation("com.google.zxing:core:3.5.3")
+
     testImplementation(libs.junit)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -94,7 +96,7 @@ androidComponents {
     onVariants(selector().withBuildType("debug")) { variant ->
         variant.outputs.forEach { output ->
             output.outputFileName.set(
-                "QuickBill-Customer-Display-v1.0.0-debug.apk"
+                "QuickBill-Customer-Display-v1.1.0-debug.apk"
             )
         }
     }
@@ -102,7 +104,7 @@ androidComponents {
     onVariants(selector().withBuildType("release")) { variant ->
         variant.outputs.forEach { output ->
             output.outputFileName.set(
-                "QuickBill-Customer-Display-v1.0.0.apk"
+                "QuickBill-Customer-Display-v1.1.0.apk"
             )
         }
     }

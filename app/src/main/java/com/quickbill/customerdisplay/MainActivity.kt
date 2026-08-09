@@ -83,6 +83,8 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
 
 /* ============================================================
    SCREEN STATES
@@ -201,142 +203,273 @@ private fun QuickBillDisplayApp(context: Context) {
     var showSettings by remember { mutableStateOf(false) }
     var reconnectKey by remember { mutableStateOf(0) }
 
-    // Success lock: once SUCCESS is entered for a bill, ignore interrupting events for 5s
-    var successLocked by remember { mutableStateOf(false) }
-    var successBillNo by remember { mutableStateOf("") }
-    var successStartMs by remember { mutableLongStateOf(0L) }
-
-    // Pending state that arrived during success lock
-    var pendingBill by remember { mutableStateOf<BillState?>(null) }
-    var pendingGoWelcome by remember { mutableStateOf(false) }
-
-    fun enterSuccess(newPayment: PaymentState, currentBill: BillState) {
-        val billNo = currentBill.billNo
-        // Ignore duplicate success for the same transaction
-        if (successLocked && billNo.isNotEmpty() && billNo == successBillNo) {
-            return
-        }
-        payment = newPayment
-        bill = currentBill
-        screen = DisplayScreen.SUCCESS
-        successLocked = true
-        successBillNo = billNo
-        successStartMs = System.currentTimeMillis()
-        pendingBill = null
-        pendingGoWelcome = false
+    /*
+     * SUCCESS SCREEN LOCK
+     *
+     * Once the desktop confirms a successful sale,
+     * the customer display must remain on SUCCESS even
+     * if the desktop immediately sends the next new_bill event.
+     */
+    var successLocked by remember {
+        mutableStateOf(false)
     }
 
-    fun applyPendingAfterSuccess() {
-        successLocked = false
-        successBillNo = ""
-        payment = PaymentState()
-
-        val pending = pendingBill
-        pendingBill = null
-
-        if (pending != null) {
-            bill = pending
-            if (pending.items.isNotEmpty()) {
-                screen = DisplayScreen.BILL
-            } else {
-                screen = DisplayScreen.WELCOME
-            }
-        } else if (pendingGoWelcome) {
-            pendingGoWelcome = false
-            bill = BillState()
-            screen = DisplayScreen.WELCOME
-        } else {
-            // No pending events — clean idle
-            bill = BillState()
-            screen = DisplayScreen.WELCOME
-        }
+    var successBill by remember {
+        mutableStateOf<BillState?>(null)
     }
+
+    var successPayment by remember {
+        mutableStateOf<PaymentState?>(null)
+    }
+
+    var pendingBill by remember {
+        mutableStateOf<BillState?>(null)
+    }
+
 
     val socketManager = remember {
+
         WebSocketManager(
 
             onConnectionChanged = { isConnected ->
+
                 connected = isConnected
             },
 
             onBillUpdate = { newBill ->
+
+                /*
+                 * Do not interrupt SUCCESS with a live bill update.
+                 *
+                 * The desktop may clear/update its bill immediately
+                 * after completing a sale.
+                 */
                 if (successLocked) {
-                    // Hold the update until success period ends
+
                     pendingBill = newBill
-                    pendingGoWelcome = false
+
                 } else {
+
                     bill = newBill
-                    if (newBill.items.isNotEmpty()) {
-                        // Immediately switch to BILL on first item
-                        if (screen != DisplayScreen.PAYMENT && screen != DisplayScreen.SUCCESS) {
-                            screen = DisplayScreen.BILL
+
+                    screen =
+                        if (newBill.items.isNotEmpty()) {
+                            DisplayScreen.BILL
+                        } else {
+                            DisplayScreen.WELCOME
                         }
-                    }
                 }
             },
 
             onPaymentUpdate = { newPayment ->
-                if (successLocked) {
-                    // Ignore payment updates while success is locked
-                    return@WebSocketManager
-                }
+
                 payment = newPayment
+
                 when (newPayment.status) {
+
                     PaymentStatus.STARTED,
                     PaymentStatus.PENDING -> {
-                        screen = DisplayScreen.PAYMENT
+
+                        /*
+                         * Never allow a late payment event to
+                         * interrupt the success screen.
+                         */
+                        if (!successLocked) {
+
+                            screen = DisplayScreen.PAYMENT
+                        }
                     }
+
                     PaymentStatus.COMPLETED -> {
-                        enterSuccess(newPayment, bill)
+
+                        /*
+                         * Desktop has confirmed the payment.
+                         * Enter the protected SUCCESS state.
+                         */
+                        successPayment = newPayment
+                        successBill = bill
+
+                        successLocked = true
+                        screen = DisplayScreen.SUCCESS
                     }
+
+                    PaymentStatus.CANCELLED -> {
+
+                        if (!successLocked) {
+
+                            payment = PaymentState()
+
+                            screen =
+                                if (bill.items.isNotEmpty()) {
+                                    DisplayScreen.BILL
+                                } else {
+                                    DisplayScreen.WELCOME
+                                }
+                        }
+                    }
+
                     PaymentStatus.IDLE -> {
-                        if (bill.items.isNotEmpty() && screen != DisplayScreen.SUCCESS) {
-                            screen = DisplayScreen.BILL
+
+                        if (!successLocked) {
+
+                            screen =
+                                if (bill.items.isNotEmpty()) {
+                                    DisplayScreen.BILL
+                                } else {
+                                    DisplayScreen.WELCOME
+                                }
                         }
                     }
                 }
             },
 
             onSaleCompleted = { newPayment ->
-                if (successLocked) {
-                    // Same transaction or race — keep success lock
-                    return@WebSocketManager
+
+                /*
+                 * This is the strongest confirmation event.
+                 *
+                 * Keep SUCCESS locked even if new_bill follows
+                 * immediately from the desktop.
+                 */
+                successPayment = newPayment
+                successBill = bill
+
+                payment = newPayment
+
+                successLocked = true
+                screen = DisplayScreen.SUCCESS
+            },
+
+            onPaymentCancelled = { _ ->
+
+                if (!successLocked) {
+
+                    payment = PaymentState()
+
+                    screen =
+                        if (bill.items.isNotEmpty()) {
+                            DisplayScreen.BILL
+                        } else {
+                            DisplayScreen.WELCOME
+                        }
                 }
-                enterSuccess(newPayment, bill)
             },
 
             onNewBill = { newBill ->
+
+                /*
+                 * IMPORTANT:
+                 *
+                 * Desktop sends new_bill immediately after
+                 * sale_completed.
+                 *
+                 * Store it instead of changing the screen.
+                 */
                 if (successLocked) {
-                    // Do NOT interrupt SUCCESS. Store for later.
+
                     pendingBill = newBill
-                    pendingGoWelcome = true
+
                 } else {
+
                     bill = newBill
+
                     payment = PaymentState()
-                    if (newBill.items.isNotEmpty()) {
-                        screen = DisplayScreen.BILL
-                    } else {
-                        screen = DisplayScreen.WELCOME
-                    }
+
+                    screen =
+                        if (newBill.items.isNotEmpty()) {
+                            DisplayScreen.BILL
+                        } else {
+                            DisplayScreen.WELCOME
+                        }
                 }
             },
 
             onError = { _ ->
-                // Silent — never show technical errors to customer
+
                 connected = false
+            },
+
+            onDesktopDiscovered = { discoveredIp, _ ->
+
+                preferences
+                    .edit()
+                    .putString(
+                        PREF_IP,
+                        discoveredIp
+                    )
+                    .apply()
+
+                desktopIp = discoveredIp
             }
         )
     }
 
-    LaunchedEffect(Unit) {
-        val savedIp = preferences
-            .getString(PREF_IP, DEFAULT_IP)
-            ?.trim()
-            .takeUnless { it.isNullOrEmpty() }
-            ?: DEFAULT_IP
+    LaunchedEffect(successLocked) {
 
-        socketManager.connect(
-            ipAddress = savedIp,
+        if (!successLocked) {
+            return@LaunchedEffect
+        }
+
+        /*
+         * Keep the success screen visible for 5 seconds.
+         */
+        delay(SUCCESS_LOCK_MS)
+
+        /*
+         * First apply the bill that arrived while SUCCESS
+         * was locked.
+         */
+        val queuedBill = pendingBill
+
+        if (queuedBill != null) {
+
+            bill = queuedBill
+            pendingBill = null
+
+        } else {
+
+            /*
+             * Normally the desktop will already have sent
+             * new_bill. If not, simply keep the current bill.
+             */
+        }
+
+        payment = PaymentState()
+
+        successPayment = null
+        successBill = null
+
+        successLocked = false
+
+        /*
+         * The desktop normally sends an empty new_bill after
+         * completing the sale, so this becomes WELCOME.
+         *
+         * If a real bill is queued, show BILL.
+         */
+        screen =
+            if (bill.items.isNotEmpty()) {
+                DisplayScreen.BILL
+            } else {
+                DisplayScreen.WELCOME
+            }
+    }
+
+    LaunchedEffect(Unit) {
+
+        val savedIp =
+            preferences
+                .getString(
+                    PREF_IP,
+                    ""
+                )
+                ?.trim()
+                ?.takeIf {
+                    it.isNotEmpty()
+                }
+
+        socketManager.start(
+            preferredIp = savedIp,
             port = DEFAULT_PORT
         )
     }
@@ -345,15 +478,6 @@ private fun QuickBillDisplayApp(context: Context) {
         onDispose { socketManager.disconnect() }
     }
 
-    /* Success lock timer — absolute 5 seconds, cannot be cancelled by new events */
-    LaunchedEffect(successLocked, successStartMs) {
-        if (successLocked) {
-            val elapsed = System.currentTimeMillis() - successStartMs
-            val remaining = (SUCCESS_LOCK_MS - elapsed).coerceAtLeast(0L)
-            delay(remaining)
-            applyPendingAfterSuccess()
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -374,7 +498,10 @@ private fun QuickBillDisplayApp(context: Context) {
                 DisplayScreen.WELCOME -> WelcomeScreen(onSettings = { showSettings = true })
                 DisplayScreen.BILL    -> BillScreen(bill = bill)
                 DisplayScreen.PAYMENT -> PaymentScreen(bill = bill, payment = payment)
-                DisplayScreen.SUCCESS -> SuccessScreen(bill = bill, payment = payment)
+                DisplayScreen.SUCCESS -> SuccessScreen(
+                    bill = successBill ?: bill,
+                    payment = successPayment ?: payment
+                )
             }
         }
 
@@ -1058,10 +1185,12 @@ private fun PaymentScreen(bill: BillState, payment: PaymentState) {
             Spacer(modifier = Modifier.height(30.dp))
 
             when (mode) {
-                PaymentMode.UPI -> UpiPaymentPanel(
-                    payment = payment,
-                    accentColor = accentColor
-                )
+                PaymentMode.UPI -> {
+                    UpiPaymentPanel(
+                        payment = payment,
+                        accentColor = accentColor
+                    )
+                }
                 PaymentMode.CASH -> InstructionPanel(
                     icon = Icons.Default.Payment,
                     message = "Please pay the cashier",
@@ -1113,42 +1242,74 @@ private fun PaymentModeIcon(mode: PaymentMode, accentColor: Color) {
 }
 
 @Composable
-private fun UpiPaymentPanel(payment: PaymentState, accentColor: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun UpiPaymentPanel(
+    payment: PaymentState,
+    accentColor: Color
+) {
+    val qrBitmap = remember(payment.qrPayload) {
+        QrCodeBitmap.generate(
+            payload = payment.qrPayload,
+            size = 650
+        )
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
 
         Box(
             modifier = Modifier
-                .size(230.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(ColorWhite),
+                .size(290.dp)
+                .clip(
+                    RoundedCornerShape(20.dp)
+                )
+                .background(Color.White)
+                .padding(12.dp),
             contentAlignment = Alignment.Center
         ) {
-            if (payment.qrEnabled) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+            if (
+                payment.qrEnabled &&
+                payment.qrPayload.isNotBlank() &&
+                qrBitmap != null
+            ) {
+
+                Image(
+                    bitmap = qrBitmap.asImageBitmap(),
+                    contentDescription = "UPI payment QR",
+                    modifier = Modifier.fillMaxSize()
+                )
+
+            } else {
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
                     Icon(
                         imageVector = Icons.Default.QrCode2,
                         contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(136.dp)
+                        tint = Color(0xFF777777),
+                        modifier = Modifier.size(80.dp)
                     )
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
                     Text(
-                        text = "UPI",
-                        color = Color(0xFF1A1A1A),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "QR unavailable",
+                        color = Color(0xFF777777),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
-            } else {
-                Text(
-                    text = "QR",
-                    color = Color(0xFF888888),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold
-                )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
 
         Text(
             text = "SCAN TO PAY",
@@ -1158,12 +1319,26 @@ private fun UpiPaymentPanel(payment: PaymentState, accentColor: Color) {
             letterSpacing = 2.sp
         )
 
-        Spacer(modifier = Modifier.height(5.dp))
+        Spacer(
+            modifier = Modifier.height(7.dp)
+        )
 
         Text(
-            text = "Use any UPI app",
+            text = "Please scan the QR code using any UPI app and show the payment confirmation screen to the cashier.",
             color = ColorMuted,
-            fontSize = 16.sp
+            fontSize = 15.sp,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(
+            modifier = Modifier.height(10.dp)
+        )
+
+        Text(
+            text = "₹${money(payment.qrAmount)}",
+            color = Color.White,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
