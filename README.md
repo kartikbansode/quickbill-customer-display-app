@@ -5,6 +5,8 @@
 > 
 Android customer display app for QuickBill billing software.
 
+<a href="https://github.com/kartikbansode/quickbill-customer-display-app/releases/download/v1.0.0/QuickBill-Customer-Display-v1.0.0.apk">Download App (Andriod Apk v1.0.0)</a>
+
 The app connects to the QuickBill desktop application over the local network and displays the current bill, payment status, and completed sale information on a customer-facing tablet.
 
 ## Features
