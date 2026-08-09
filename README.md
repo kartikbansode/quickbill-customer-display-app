@@ -33,22 +33,33 @@
 </p>
 
 <p align="center">
-  <img
-    src="https://img.shields.io/badge/Version-1.1.0-blue"
-    alt="Version 1.1.0"
-  />
-  <img
-    src="https://img.shields.io/badge/Android-8.0%2B-green"
-    alt="Android 8.0+"
-  />
-  <img
-    src="https://img.shields.io/badge/Kotlin-Android-purple"
-    alt="Kotlin"
-  />
-  <img
-    src="https://img.shields.io/badge/Jetpack%20Compose-Material%203-orange"
-    alt="Jetpack Compose"
-  />
+  <a href="https://github.com/kartikbansode/quickbill-customer-display-app/releases">
+    <img
+      src="https://img.shields.io/badge/Version-1.1.0-blue"
+      alt="Version 1.1.0"
+    />
+  </a>
+
+  <a href="https://developer.android.com/about/versions/oreo">
+    <img
+      src="https://img.shields.io/badge/Android-8.0%2B-green"
+      alt="Android 8.0+"
+    />
+  </a>
+
+  <a href="https://kotlinlang.org/">
+    <img
+      src="https://img.shields.io/badge/Kotlin-Android-purple"
+      alt="Kotlin"
+    />
+  </a>
+
+  <a href="https://developer.android.com/develop/ui/compose">
+    <img
+      src="https://img.shields.io/badge/Jetpack%20Compose-Material%203-orange"
+      alt="Jetpack Compose"
+    />
+  </a>
 </p>
 
 <p align="center">
