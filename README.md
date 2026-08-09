@@ -1,15 +1,71 @@
-# QuickBill Customer Display
+<p align="center">
+  <a href="https://github.com/kartikbansode/quickbill-customer-display-app">
+    <img width="80" height="80" alt="logo" src="https://github.com/user-attachments/assets/cc80dfee-89d8-4fc7-905d-7dfbaa3b480b" />
+  </a>
+</p>
 
-> **Latest Version:** 1.1.0  
-> **Release Date:** August 2026
+<h1 align="center">
+  QuickBill Customer Display
+</h1>
 
-<a href="https://github.com/kartikbansode/quickbill-customer-display-app/releases/download/v1.1.0/QuickBill-Customer-Display-v1.1.0.apk">Download App (Android Apk v1.1.0)</a>
+<p align="center">
+  Real-Time Android Customer Display for QuickBill
+</p>
 
-Android customer display app for QuickBill billing software.
+<p align="center">
+  <a href="https://github.com/kartikbansode/quickbill">
+    QuickBill Desktop
+  </a>
+  &bull;
+  <a href="https://github.com/kartikbansode/quickbill-customer-display-app/releases">
+    Releases
+  </a>
+  &bull;
+  <a href="https://github.com/kartikbansode/quickbill-customer-display-app">
+    Repository
+  </a>
+</p>
 
-The app connects to the QuickBill desktop application over the local network and displays the current bill, payment status, and completed sale information on a customer-facing tablet.
+<p align="center">
+  <a href="https://github.com/kartikbansode/quickbill-customer-display-app/releases/download/v1.1.0/QuickBill-Customer-Display-v1.1.0.apk">
+    <strong>Download Android App v1.1.0</strong>
+  </a>
+</p>
 
----
+<p align="center">
+  <img
+    src="https://img.shields.io/badge/Version-1.1.0-blue"
+    alt="Version 1.1.0"
+  />
+  <img
+    src="https://img.shields.io/badge/Android-8.0%2B-green"
+    alt="Android 8.0+"
+  />
+  <img
+    src="https://img.shields.io/badge/Kotlin-Android-purple"
+    alt="Kotlin"
+  />
+  <img
+    src="https://img.shields.io/badge/Jetpack%20Compose-Material%203-orange"
+    alt="Jetpack Compose"
+  />
+</p>
+
+<p align="center">
+  QuickBill Customer Display is an Android customer-facing display application
+  designed to work with the QuickBill desktop billing system over a local network.
+  It provides real-time bill, payment, QR and transaction status information
+  on a dedicated customer display.
+</p>
+
+<p align="center">
+  <strong>Companion app for
+    <a href="https://github.com/kartikbansode/quickbill">QuickBill Desktop</a>
+  </strong>
+  · Real-time customer-facing billing display
+</p>
+
+
 
 ## What's Changed in v1.1.0
 
@@ -47,23 +103,24 @@ The app connects to the QuickBill desktop application over the local network and
 
 ## Screenshots
 
-### Customer Billing Window
+### Welcome Screen
 
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/a7da29cc-d3e1-47d2-a949-7c3a4842206b" />
+<img width="2000" height="1200" alt="Screenshot_20260809-203824" src="https://github.com/user-attachments/assets/5366f565-fe6c-4b3c-b173-7996ca1368f9" />
 
-### Product Management
 
-<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/12a94658-4a30-4b03-986a-eeb3cc6795fb" />
+### Billing Screen
 
-### Invoice
+<img width="2000" height="1200" alt="Screenshot_20260809-203851" src="https://github.com/user-attachments/assets/9e008f2c-4c78-45d8-8ac5-241d179b5a9c" />
 
-### 80 mm -
 
-<img width="347" height="826" alt="image" src="https://github.com/user-attachments/assets/5b73904e-bc3e-4373-9fc0-c13501e12a9d" />
+### Payment Screen
 
-### A4 -
+<img width="2000" height="1200" alt="Screenshot_20260809-203917" src="https://github.com/user-attachments/assets/d6d30b66-5447-4ffd-b81c-e2e0fed87ffb" />
 
-<img width="671" height="842" alt="image" src="https://github.com/user-attachments/assets/b87f7430-563c-400b-b93d-4c637720cee1" />
+### Payment Successful Screen
+
+<img width="2000" height="1200" alt="Screenshot_20260809-203922" src="https://github.com/user-attachments/assets/8a71e918-8447-4a89-9ffc-4592c6aec477" />
+
 
 ---
 
