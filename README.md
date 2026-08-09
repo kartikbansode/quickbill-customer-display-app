@@ -60,6 +60,12 @@
       alt="Jetpack Compose"
     />
   </a>
+  <a href="https://github.com/kartikbansode/quickbill-customer-display-app/blob/main/LICENSE">
+  <img
+    src="https://img.shields.io/badge/LICENSE-green"
+    alt="License"
+  />
+  </a>
 </p>
 
 <p align="center">
@@ -169,7 +175,15 @@ Port: 8765
 
 ## License
 
-This project is licensed under the MIT License.
+This project is proprietary software.
+
+Copyright © 2026 Kartik Bansode. All Rights Reserved.
+
+The source code is publicly available for viewing, educational, portfolio, and evaluation purposes only.
+
+No permission is granted to copy, reproduce, modify, redistribute, republish, commercially use, sublicense, sell, or create derivative works from this software or its source code without prior written permission from the copyright holder.
+
+For complete terms and restrictions, see the [LICENSE](https://github.com/kartikbansode/quickbill-customer-display-app/blob/main/LICENSE) file.
 
 ---
 
